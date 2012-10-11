@@ -9,6 +9,7 @@ add_definitions(
 	-DPACKAGE_VERSION=""
 	-DPACKAGE_BUGREPORT=""
     -DUSE_SSE2=1
+    -DHAVE_PTHREAD_SETSPECIFIC #Get pixman to use pthread's TLS stuff instead of MSVC __declspec(thread) intrinsics, which don't work on XP.
     #-DUSE_X86_MMX=1 #x64 compiler has problems with MMX.
 )
 
@@ -80,6 +81,7 @@ set(PIXMAN_COMBINE_SRCS pixman-combine32.c pixman-combine64.c pixman-combine32.h
 add_custom_target(update_combines ALL
 	DEPENDS ${PIXMAN_COMBINE_SRCS}
 )
+SET_PROPERTY(TARGET update_combines PROPERTY FOLDER "pixman")
 
 set_source_files_properties(${PIXMAN_COMBINE_SRCS} pixman-combine32.c PROPERTIES GENERATED TRUE)
 
@@ -93,7 +95,9 @@ set_source_files_properties(${PIXMAN_COMBINE_SRCS} pixman-combine32.c PROPERTIES
 # pixman-combine64.h: pixman-combine.h.template make-combine.pl
 	# perl ./make-combine.pl 16 < $< > $@ || ($(RM) $@; exit 1)
 
-include_directories(.)
+include_directories(.
+                    ${GATEWAYDEPS_SOURCE_DIR}/pthreads)
 
 add_library(${PIXLIB} STATIC ${PIXMAN_SRCS} ${PIXMAN_SSE_SRCS} ${PIXMAN_HDRS})
+SET_PROPERTY(TARGET ${PIXLIB} PROPERTY FOLDER "pixman")
 add_dependencies(${PIXLIB} update_combines)
